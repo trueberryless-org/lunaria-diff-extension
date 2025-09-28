@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.7.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build and zip
+        run: |
+          pnpm zip
+          pnpm zip:firefox
+
+      - name: Set job summary
+        run: |
+          echo "$(ls -lhp .output/ | grep -v '/$' | awk '{print $5, $9}')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload compiled Chrome extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunaria-diff-extension-chrome
+          path: .output/chrome-mv3
+
+      - name: Upload compiled Firefox extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunaria-diff-extension-firefox
+          path: .output/firefox-mv2
